@@ -26,16 +26,29 @@ void travelingSalesman(const vector<vector<int>> &distanceMatrix)
 
     int minDistance = numeric_limits<int>::max();
     vector<int> bestRoute;
+
+    cout << "All possible routes and their distances:\n";
+
     do
     {
         int currentDistance = calculateRouteDistance(cities, distanceMatrix);
+
+        // Display the current route
+        for (int city : cities)
+        {
+            cout << city << " ";
+        }
+        cout << " | Distance: " << currentDistance << endl;
+
+        // Update minimum distance and best route if a shorter path is found
         if (currentDistance < minDistance)
         {
             minDistance = currentDistance;
             bestRoute = cities;
         }
     } while (next_permutation(cities.begin(), cities.end()));
-    cout << "Shortest route: ";
+
+    cout << "\nShortest route: ";
     for (int city : bestRoute)
     {
         cout << city << " ";
