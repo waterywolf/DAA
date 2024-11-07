@@ -1,81 +1,125 @@
 #include <iostream>
+#include <climits>
 #include <vector>
-#include <limits>
-#include <algorithm>
+
 using namespace std;
 
-int calculateRouteDistance(const vector<int> &route, const vector<vector<int>> &distanceMatrix)
-{
-    int totalDistance = 0;
-    int n = route.size();
-    for (int i = 0; i < n; i++)
-    {
-        totalDistance += distanceMatrix[route[i]][route[(i + 1) % n]];
-    }
-    return totalDistance;
-}
+class TSP {
+private:
+    int n;
+    vector<vector<int>> cost_matrix;
+    vector<int> final_path;
+    int final_res;
 
-void travelingSalesman(const vector<vector<int>> &distanceMatrix)
-{
-    int n = distanceMatrix.size();
-    vector<int> cities(n);
-    for (int i = 0; i < n; i++)
-    {
-        cities[i] = i;
+public:
+    TSP(const vector<vector<int>>& cost) : cost_matrix(cost) {
+        n = cost_matrix.size();
+        final_res = INT_MAX;
+        final_path.resize(n + 1);
     }
 
-    int minDistance = numeric_limits<int>::max();
-    vector<vector<int>> bestRoutes;  
+    void travelling_salesman() {
+        vector<bool> visited(n, false);
+        visited[0] = true;
+        vector<int> path;
+        path.push_back(0);
+        int cost = reduce_matrix();
+        travelling_salesman_util(0, 1, cost, visited, path);
+    }
 
-    cout << "All possible routes and their distances:\n";
+    void travelling_salesman_util(int curr_pos, int count, int cost, vector<bool>& visited, vector<int>& path) {
+        if (count == n) {
+            if (cost_matrix[curr_pos][0]) {
+                int total_cost = cost + cost_matrix[curr_pos][0];
+                if (total_cost < final_res) {
+                    final_path = path;
+                    final_path.push_back(0);
+                    final_res = total_cost;
+                }
+            }
+            return;
+        }
 
-    do
-    {
-        int currentDistance = calculateRouteDistance(cities, distanceMatrix);
-        for (int city : cities)
-        {
-            cout << city << " ";
+        for (int i = 0; i < n; i++) {
+            if (!visited[i] && cost_matrix[curr_pos][i]) {
+                int temp = cost_matrix[curr_pos][i];
+                cost += temp;
+                visited[i] = true;
+                path.push_back(i);
+                travelling_salesman_util(i, count + 1, cost, visited, path);
+                visited[i] = false;
+                path.pop_back();
+                cost -= temp;
+            }
         }
-        cout << " | Distance: " << currentDistance << endl;
-        if (currentDistance < minDistance)
-        {
-            minDistance = currentDistance;
-            bestRoutes.clear();  
-            bestRoutes.push_back(cities); 
-        }
-        else if (currentDistance == minDistance)
-        {
-            bestRoutes.push_back(cities);  
-        }
-    } while (next_permutation(cities.begin(), cities.end()));
+    }
 
-    cout << "\nShortest routes with minimum distance " << minDistance << ":\n";
-    for (const auto &route : bestRoutes)
-    {
-        for (int city : route)
-        {
-            cout << city << " ";
+    int reduce_matrix() {
+        int total_reduction = 0;
+
+        for (int i = 0; i < n; i++) {
+            int row_min = INT_MAX;
+            for (int j = 0; j < n; j++) {
+                if (cost_matrix[i][j] < row_min && cost_matrix[i][j] != 0) {
+                    row_min = cost_matrix[i][j];
+                }
+            }
+            if (row_min != INT_MAX) {
+                total_reduction += row_min;
+                for (int j = 0; j < n; j++) {
+                    cost_matrix[i][j] -= row_min;
+                }
+            }
+        }
+
+        for (int j = 0; j < n; j++) {
+            int col_min = INT_MAX;
+            for (int i = 0; i < n; i++) {
+                if (cost_matrix[i][j] < col_min && cost_matrix[i][j] != 0) {
+                    col_min = cost_matrix[i][j];
+                }
+            }
+            if (col_min != INT_MAX) {
+                total_reduction += col_min;
+                for (int i = 0; i < n; i++) {
+                    cost_matrix[i][j] -= col_min;
+                }
+            }
+        }
+
+        return total_reduction;
+    }
+
+    void print_result() {
+        cout << "Minimum cost: " << final_res << endl;
+        cout << "Path: ";
+        for (size_t i = 0; i < final_path.size(); ++i) {
+            cout << final_path[i] + 1;
+            if (i < final_path.size() - 1) {
+                cout << " → ";
+            }
         }
         cout << endl;
     }
-}
+};
 
-int main()
-{
-    int n;
+int main() {
+    int num_cities;
     cout << "Enter the number of cities: ";
-    cin >> n;
+    cin >> num_cities;
 
-    vector<vector<int>> distanceMatrix(n, vector<int>(n));
+    vector<vector<int>> cost_matrix(num_cities, vector<int>(num_cities));
 
-    cout << "Enter the distance matrix (enter 0 for diagonal elements):" << endl;
-    for (int i = 0; i < n; i++)
-    {
-        for (int j = 0; j < n; j++)
-        {
-            cin >> distanceMatrix[i][j];
+    cout << "Enter the cost matrix (enter 0 for no direct path):\n";
+    for (int i = 0; i < num_cities; i++) {
+        for (int j = 0; j < num_cities; j++) {
+            cin >> cost_matrix[i][j];
         }
     }
-     travelingSalesman(distanceMatrix);
+
+    TSP tsp(cost_matrix);
+    tsp.travelling_salesman();
+    tsp.print_result();
+
     return 0;
 }
