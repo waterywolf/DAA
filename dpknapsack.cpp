@@ -1,62 +1,49 @@
 #include <iostream>
 #include <vector>
-#include <algorithm> 
+#include <algorithm>
 #include <iomanip>
 
 using namespace std;
-struct Item {
 
+struct Item {
     int id;
     int weight;
     int profit;
-    double pw_ratio;
-
 };
 
-int knapsack_fractional(const vector<Item>& items, int capacity) {
+int knapsack_01(const vector<Item>& items, int capacity) {
+    int n = items.size();
+    vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0));
 
-    double total_profit = 0.0;
-    int remaining_capacity = capacity;
-
- cout << "Knapsack solution:\n";
- cout << "id\tamount\tweight\tprofit\tp/w\n";
-
-    for (const auto& item : items) {
-        if (remaining_capacity == 0) break;
-
-
-
-        double amount = 0.0;
-        if (item.weight <= remaining_capacity) {
-
-            amount = 1.0; // Take the whole item
-             remaining_capacity -= item.weight;
-            total_profit += item.profit;
-
-        } else {
-
-            amount = static_cast<double>(remaining_capacity) / item.weight; // Take fraction of item
-            total_profit += item.profit * amount;
-            remaining_capacity = 0;
-
+    for (int i = 1; i <= n; ++i) {
+        for (int w = 0; w <= capacity; ++w) {
+            if (items[i - 1].weight <= w) {
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - items[i - 1].weight] + items[i - 1].profit);
+            } else {
+                dp[i][w] = dp[i - 1][w];
+            }
         }
-
-        cout << item.id << "\t" 
-
-             << fixed << setprecision(2) << amount << "\t"
-             << item.weight << "\t"
-             << item.profit << "\t"
-             << fixed << setprecision(2) << item.pw_ratio << "\n";
-
     }
 
-    cout << "Total Profit is: " << fixed << setprecision(2) << total_profit << endl;
-    return total_profit;
+    cout << "Knapsack solution (0/1 Knapsack):\n";
+    cout << "id\tweight\tprofit\n";
+    int total_profit = dp[n][capacity];
+    int remaining_capacity = capacity;
 
+    for (int i = n; i > 0; --i) {
+        if (dp[i][remaining_capacity] != dp[i - 1][remaining_capacity]) {
+            cout << items[i - 1].id << "\t"
+                 << items[i - 1].weight << "\t"
+                 << items[i - 1].profit << "\n";
+            remaining_capacity -= items[i - 1].weight;
+        }
+    }
+
+    cout << "Total Profit is: " << total_profit << endl;
+    return total_profit;
 }
 
 int main() {
-
     int n;
     cout << "Enter the number of items: ";
     cin >> n;
@@ -64,29 +51,19 @@ int main() {
     vector<Item> items(n);
 
     for (int i = 0; i < n; ++i) {
-
-        items[i].id = i + 1;  // Automatically assign id
+        items[i].id = i + 1;
         cout << "Enter details for item " << items[i].id << ":\n";
         cout << "  Enter weight: ";
         cin >> items[i].weight;
         cout << "  Enter profit: ";
         cin >> items[i].profit;
-
-        items[i].pw_ratio = static_cast<double>(items[i].profit) / items[i].weight;
     }
+
     int capacity;
     cout << "Enter the capacity of the knapsack: ";
     cin >> capacity;
 
-    sort(items.begin(), items.end(), [](const Item& a, const Item& b) {
-    return a.pw_ratio > b.pw_ratio;
-
-    });
-    knapsack_fractional(items, capacity);
-
-
+    knapsack_01(items, capacity);
 
     return 0;
-
 }
-
